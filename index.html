@@ -658,56 +658,72 @@ document.getElementById('hamburger').addEventListener('click', function(){
   document.getElementById('navLinks').classList.toggle('open');
 });
 
-// ── INQUIRY FORM → Google Forms integration ──
-// STEP 1: Go to https://forms.google.com
-// STEP 2: Create a form with these fields (same order):
-//   Student Name, Class/Year, Board/College, Subject, Phone, Email, Schedule, Mode, Message
-// STEP 3: Click 3-dot menu → "Get pre-filled link" → fill one answer → copy the URL
-// STEP 4: Extract the "entry.XXXXXXXXX" IDs from that URL
-// STEP 5: Replace the ENTRY_IDs below with your actual ones
-// STEP 6: Replace FORM_ID with your Google Form ID from the form URL
-
-const GOOGLE_FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLSfazB5Mk2Mvi458LksCYk887a35mTBL1FlV-GpJ5sUfKM0j-Q/formResponse";
+// ── INQUIRY FORM → Google Forms Direct Submission ──
 const FIELD_MAP = {
   name:          "entry.1778302468",
   student_class: "entry.587240550",
   board:         "entry.2104991019",
   subject:       "entry.115146162",
   phone:         "entry.1567631418",
-  email:         "",
   schedule:      "entry.305079569",
   mode:          "entry.317351808",
   message:       "entry.2014563735"
 };
 
+const FORM_BASE = "https://docs.google.com/forms/d/e/1FAIpQLSfazB5Mk2Mvi458LksCYk887a35mTBL1FlV-GpJ5sUfKM0j-Q/viewform?usp=pp_url";
+
 document.getElementById('inquiryForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  const btn = document.getElementById('submitBtn');
-  btn.textContent = 'Sending...';
-  btn.disabled = true;
-
   const fd = new FormData(this);
-  const body = new URLSearchParams();
+  
+  // Build prefilled Google Form URL with student data
+  let url = FORM_BASE;
   for (const [name, entryId] of Object.entries(FIELD_MAP)) {
-    if (entryId) body.append(entryId, fd.get(name) || '');
+    if (entryId && fd.get(name)) {
+      url += '&' + entryId + '=' + encodeURIComponent(fd.get(name));
+    }
   }
-
-  // Google Forms accepts no-CORS submission
-  fetch(GOOGLE_FORM_ACTION, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: body.toString()
-  }).then(() => {
-    document.getElementById('formSuccess').style.display = 'block';
+  
+  // Show success message
+  document.getElementById('formSuccess').style.display = 'block';
+  document.getElementById('submitBtn').textContent = '\u2713 Submitted!';
+  document.getElementById('submitBtn').disabled = true;
+  
+  // Submit silently via hidden iframe — student stays on your website!
+  let iframe = document.getElementById('hidden_iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'hidden_iframe';
+    iframe.name = 'hidden_iframe';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+  }
+  
+  // Create and submit a hidden form targeting the iframe
+  const hiddenForm = document.createElement('form');
+  hiddenForm.method = 'POST';
+  hiddenForm.action = 'https://docs.google.com/forms/d/e/1FAIpQLSfazB5Mk2Mvi458LksCYk887a35mTBL1FlV-GpJ5sUfKM0j-Q/formResponse';
+  hiddenForm.target = 'hidden_iframe';
+  hiddenForm.style.display = 'none';
+  
+  for (const [name, entryId] of Object.entries(FIELD_MAP)) {
+    if (entryId) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = entryId;
+      input.value = fd.get(name) || '';
+      hiddenForm.appendChild(input);
+    }
+  }
+  
+  document.body.appendChild(hiddenForm);
+  hiddenForm.submit();
+  
+  // Clean up and reset form
+  setTimeout(() => {
+    document.body.removeChild(hiddenForm);
     document.getElementById('inquiryForm').reset();
-    btn.textContent = '\u2713 Submitted!';
-  }).catch(() => {
-    // no-cors always triggers catch — treat as success
-    document.getElementById('formSuccess').style.display = 'block';
-    document.getElementById('inquiryForm').reset();
-    btn.textContent = '\u2713 Submitted!';
-  });
+  }, 2000);
 });
 </script>
 </body>
