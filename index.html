@@ -658,72 +658,57 @@ document.getElementById('hamburger').addEventListener('click', function(){
   document.getElementById('navLinks').classList.toggle('open');
 });
 
-// ── INQUIRY FORM → Google Forms Direct Submission ──
-const FIELD_MAP = {
-  name:          "entry.1778302468",
-  student_class: "entry.587240550",
-  board:         "entry.2104991019",
-  subject:       "entry.115146162",
-  phone:         "entry.1567631418",
-  schedule:      "entry.305079569",
-  mode:          "entry.317351808",
-  message:       "entry.2014563735"
-};
-
-const FORM_BASE = "https://docs.google.com/forms/d/e/1FAIpQLSfazB5Mk2Mvi458LksCYk887a35mTBL1FlV-GpJ5sUfKM0j-Q/viewform?usp=pp_url";
+// ── INQUIRY FORM → Direct Email via mailto ──
 
 document.getElementById('inquiryForm').addEventListener('submit', function(e) {
   e.preventDefault();
   const fd = new FormData(this);
-  
-  // Build prefilled Google Form URL with student data
-  let url = FORM_BASE;
-  for (const [name, entryId] of Object.entries(FIELD_MAP)) {
-    if (entryId && fd.get(name)) {
-      url += '&' + entryId + '=' + encodeURIComponent(fd.get(name));
-    }
-  }
-  
+
+  // Collect all field values
+  const name     = fd.get('name') || '';
+  const sclass   = fd.get('student_class') || '';
+  const board    = fd.get('board') || '';
+  const subject  = fd.get('subject') || '';
+  const phone    = fd.get('phone') || '';
+  const email    = fd.get('email') || '';
+  const schedule = fd.get('schedule') || '';
+  const mode     = fd.get('mode') || '';
+  const message  = fd.get('message') || '';
+
+  // Build email subject and body
+  const emailSubject = encodeURIComponent('New Student Inquiry — ' + name + ' — Subrata Pal Tuitions');
+  const emailBody = encodeURIComponent(
+    'NEW STUDENT INQUIRY\n' +
+    '================================\n\n' +
+    'Student Name   : ' + name + '\n' +
+    'Class / Year   : ' + sclass + '\n' +
+    'Board / College: ' + board + '\n' +
+    'Subject        : ' + subject + '\n' +
+    'Phone Number   : ' + phone + '\n' +
+    'Email Address  : ' + email + '\n' +
+    'Preferred Time : ' + schedule + '\n' +
+    'Mode           : ' + mode + '\n\n' +
+    'Message:\n' + message + '\n\n' +
+    '================================\n' +
+    'Sent from Subrata Pal Tuitions Website'
+  );
+
+  // Open email client with both Gmail addresses in To and CC
+  const mailtoLink = 'mailto:subratapal2311@gmail.com?cc=subratapal2312@gmail.com&subject=' + emailSubject + '&body=' + emailBody;
+  window.location.href = mailtoLink;
+
   // Show success message
   document.getElementById('formSuccess').style.display = 'block';
   document.getElementById('submitBtn').textContent = '\u2713 Submitted!';
   document.getElementById('submitBtn').disabled = true;
-  
-  // Submit silently via hidden iframe — student stays on your website!
-  let iframe = document.getElementById('hidden_iframe');
-  if (!iframe) {
-    iframe = document.createElement('iframe');
-    iframe.id = 'hidden_iframe';
-    iframe.name = 'hidden_iframe';
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-  }
-  
-  // Create and submit a hidden form targeting the iframe
-  const hiddenForm = document.createElement('form');
-  hiddenForm.method = 'POST';
-  hiddenForm.action = 'https://docs.google.com/forms/d/e/1FAIpQLSfazB5Mk2Mvi458LksCYk887a35mTBL1FlV-GpJ5sUfKM0j-Q/formResponse';
-  hiddenForm.target = 'hidden_iframe';
-  hiddenForm.style.display = 'none';
-  
-  for (const [name, entryId] of Object.entries(FIELD_MAP)) {
-    if (entryId) {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = entryId;
-      input.value = fd.get(name) || '';
-      hiddenForm.appendChild(input);
-    }
-  }
-  
-  document.body.appendChild(hiddenForm);
-  hiddenForm.submit();
-  
-  // Clean up and reset form
+
+  // Reset form after 3 seconds
   setTimeout(() => {
-    document.body.removeChild(hiddenForm);
     document.getElementById('inquiryForm').reset();
-  }, 2000);
+    document.getElementById('submitBtn').textContent = '\u2709 Submit Inquiry';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('formSuccess').style.display = 'none';
+  }, 4000);
 });
 </script>
 </body>
