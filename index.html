@@ -658,57 +658,41 @@ document.getElementById('hamburger').addEventListener('click', function(){
   document.getElementById('navLinks').classList.toggle('open');
 });
 
-// ── INQUIRY FORM → Direct Email via mailto ──
-
-document.getElementById('inquiryForm').addEventListener('submit', function(e) {
+// ── INQUIRY FORM → Web3Forms (sends directly to Gmail) ──
+document.getElementById('inquiryForm').addEventListener('submit', async function(e) {
   e.preventDefault();
+  
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
   const fd = new FormData(this);
+  fd.append('access_key', 'f8751020-2608-49db-8bf7-27ae6e4dfd70');
+  fd.append('subject', 'New Student Inquiry — ' + (fd.get('name')||'') + ' — Subrata Pal Tuitions');
+  fd.append('cc', 'subratapal2312@gmail.com');
+  fd.append('from_name', 'Subrata Pal Tuitions Website');
 
-  // Collect all field values
-  const name     = fd.get('name') || '';
-  const sclass   = fd.get('student_class') || '';
-  const board    = fd.get('board') || '';
-  const subject  = fd.get('subject') || '';
-  const phone    = fd.get('phone') || '';
-  const email    = fd.get('email') || '';
-  const schedule = fd.get('schedule') || '';
-  const mode     = fd.get('mode') || '';
-  const message  = fd.get('message') || '';
-
-  // Build email subject and body
-  const emailSubject = encodeURIComponent('New Student Inquiry — ' + name + ' — Subrata Pal Tuitions');
-  const emailBody = encodeURIComponent(
-    'NEW STUDENT INQUIRY\n' +
-    '================================\n\n' +
-    'Student Name   : ' + name + '\n' +
-    'Class / Year   : ' + sclass + '\n' +
-    'Board / College: ' + board + '\n' +
-    'Subject        : ' + subject + '\n' +
-    'Phone Number   : ' + phone + '\n' +
-    'Email Address  : ' + email + '\n' +
-    'Preferred Time : ' + schedule + '\n' +
-    'Mode           : ' + mode + '\n\n' +
-    'Message:\n' + message + '\n\n' +
-    '================================\n' +
-    'Sent from Subrata Pal Tuitions Website'
-  );
-
-  // Open email client with both Gmail addresses in To and CC
-  const mailtoLink = 'mailto:subratapal2311@gmail.com?cc=subratapal2312@gmail.com&subject=' + emailSubject + '&body=' + emailBody;
-  window.location.href = mailtoLink;
-
-  // Show success message
-  document.getElementById('formSuccess').style.display = 'block';
-  document.getElementById('submitBtn').textContent = '\u2713 Submitted!';
-  document.getElementById('submitBtn').disabled = true;
-
-  // Reset form after 3 seconds
-  setTimeout(() => {
-    document.getElementById('inquiryForm').reset();
-    document.getElementById('submitBtn').textContent = '\u2709 Submit Inquiry';
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('formSuccess').style.display = 'none';
-  }, 4000);
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('formSuccess').style.display = 'block';
+      document.getElementById('formSuccess').scrollIntoView({behavior:'smooth'});
+      btn.textContent = '\u2713 Submitted Successfully!';
+      this.reset();
+    } else {
+      alert('Error sending. Please call: 9836730840');
+      btn.textContent = '\u2709 Submit Inquiry';
+      btn.disabled = false;
+    }
+  } catch(err) {
+    alert('Error sending. Please call: 9836730840');
+    btn.textContent = '\u2709 Submit Inquiry';
+    btn.disabled = false;
+  }
 });
 </script>
 </body>
