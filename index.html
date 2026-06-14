@@ -683,6 +683,12 @@ document.getElementById('inquiryForm').addEventListener('submit', async function
       document.getElementById('formSuccess').scrollIntoView({behavior:'smooth'});
       btn.textContent = '\u2713 Submitted Successfully!';
       this.reset();
+      // Reset button after 5 seconds so another inquiry can be submitted
+      setTimeout(() => {
+        btn.textContent = '\u2709 Submit Inquiry';
+        btn.disabled = false;
+        document.getElementById('formSuccess').style.display = 'none';
+      }, 5000);
     } else {
       alert('Error sending. Please call: 9836730840');
       btn.textContent = '\u2709 Submit Inquiry';
